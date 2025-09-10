@@ -34,16 +34,13 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
         <title>Snarkels - Quiz Rewards</title>
         <meta name="description" content="On-chain Snarkels rewards users in interactive sessions with ERC20 tokens on Base and Celo networks" />
         
         {/* Farcaster Mini App Embed Meta Tags */}
         <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://snarkels.lol/api/og","button":{"title":"🎯 Play a Snarkel","action":{"type":"launch_miniapp","url":"https://snarkels.lol","name":"Snarkels","splashImageUrl":"https://snarkels.lol/logo.png","splashBackgroundColor":"#1f2937"}}}' />
         <meta name="fc:frame" content='{"version":"1","imageUrl":"https://snarkels.lol/api/og","button":{"title":"🎯 Play a Snarkel","action":{"type":"launch_frame","url":"https://snarkels.lol","name":"Snarkels","splashImageUrl":"https://snarkels.lol/logo.png","splashBackgroundColor":"#1f2937"}}}' />
-        
-        {/* Mini App Meta Tags */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -61,7 +58,7 @@ export default async function RootLayout({
         <meta name="twitter:description" content="On-chain Snarkels rewards users in interactive sessions with ERC20 tokens on Base and Celo networks" />
         <meta name="twitter:image" content="https://snarkels.lol/api/og" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-pattern`}>
         <ContextProvider cookies={cookieString}>
           <MiniAppWrapper>
             <FarcasterProvider>

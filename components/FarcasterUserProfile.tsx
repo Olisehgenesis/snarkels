@@ -42,18 +42,18 @@ export function FarcasterUserProfile({
     switch (variant) {
       case 'card':
         return (
-          <div className={`bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-4 shadow-lg border border-blue-300 ${className}`}>
+          <div className={`text-gray-800 rounded-xl p-4 ${className}`}>
             <div className="flex items-center gap-3">
               {showPfp && user.pfpUrl && (
                 <img 
                   src={user.pfpUrl} 
                   alt="Profile" 
-                  className="w-12 h-12 rounded-full border-2 border-white shadow-lg"
+                  className="w-12 h-12 rounded-full border-2 border-gray-300"
                 />
               )}
               {showPfp && !user.pfpUrl && (
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center border-2 border-white">
-                  <User className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-gray-300">
+                  <User className="w-6 h-6 text-gray-600" />
                 </div>
               )}
               <div className="flex-1">
@@ -66,7 +66,7 @@ export function FarcasterUserProfile({
                   )}
                 </div>
                 {showFid && (
-                  <p className="text-blue-100 text-sm">FID: {user.fid}</p>
+                  <p className="text-gray-600 text-sm">FID: {user.fid}</p>
                 )}
               </div>
             </div>
@@ -94,18 +94,18 @@ export function FarcasterUserProfile({
 
       default:
         return (
-          <div className={`bg-white rounded-lg p-3 shadow-md border border-gray-200 ${className}`}>
+          <div className={`rounded-lg p-3 ${className}`}>
             <div className="flex items-center gap-3">
               {showPfp && user.pfpUrl && (
                 <img 
                   src={user.pfpUrl} 
                   alt="Profile" 
-                  className="w-10 h-10 rounded-full border-2 border-blue-200"
+                  className="w-10 h-10 rounded-full border-2 border-gray-300"
                 />
               )}
               {showPfp && !user.pfpUrl && (
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-gray-300">
+                  <User className="w-5 h-5 text-gray-600" />
                 </div>
               )}
               <div>

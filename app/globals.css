@@ -2,38 +2,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+
+
+.bg-pattern {
+  --s: 65px; /* control the size*/
+  --c1: #d4d4d4;
+  --c2: #ffffff;
   
-  /* New blue theme variables - updated to sand blue */
-  --primary-blue: #2563eb;
-  --accent-blue: #3b82f6;
-  --light-blue: #dbeafe;
-  --dark-blue: #64748b; /* Changed from #1e40af to sand blue */
-  --sand-blue: #94a3b8; /* Additional sand blue tone */
-  --warm-blue: #475569; /* Warmer blue tone */
-  --success-green: #10b981;
-  --warning-amber: #f59e0b;
-  --gray-500: #6b7280;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --l1:#0000  48%,var(--c1) 0 52%,#0000 0;
+  --l2:#0000 1.3%,var(--c2) 0 32%,#0000 0;
+  background:
+    linear-gradient(-45deg,var(--l2)),
+    linear-gradient( 45deg,var(--l1)),
+    linear-gradient( 45deg,var(--l2)) calc(var(--s)/2) calc(var(--s)/2),
+    linear-gradient(-45deg,var(--l1)) var(--c2);
+  background-size: calc(2*var(--s)) var(--s),var(--s) var(--s);
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -301,25 +287,25 @@ body {
   animation: slideInFromLeft 0.5s ease-out;
 }
 
-/* New blue theme utility classes */
-.bg-blue-gradient {
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+/* Neutral theme utility classes */
+.bg-gray-gradient {
+  background: linear-gradient(135deg, var(--primary-gray) 0%, var(--dark-gray) 100%);
 }
 
-.bg-blue-light {
-  background-color: var(--light-blue);
+.bg-gray-light {
+  background-color: var(--light-gray);
 }
 
-.text-blue-primary {
-  color: var(--primary-blue);
+.text-gray-primary {
+  color: var(--primary-gray);
 }
 
-.text-blue-dark {
-  color: var(--dark-blue);
+.text-gray-dark {
+  color: var(--dark-gray);
 }
 
-.border-blue-accent {
-  border-color: var(--accent-blue);
+.border-gray-accent {
+  border-color: var(--accent-gray);
 }
 
 /* Compact card styles */
@@ -333,7 +319,7 @@ body {
 
 .compact-quiz-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 8px 25px rgba(55, 65, 81, 0.15);
 }
 
 /* Playful hover effects */
@@ -343,7 +329,7 @@ body {
 
 .playful-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 8px 25px rgba(55, 65, 81, 0.15);
 }
 
 /* Glassmorphism effect */
@@ -373,17 +359,17 @@ body {
 }
 
 /* Button pulse effect */
-@keyframes pulse-blue {
+@keyframes pulse-gray {
   0%, 100% { 
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); 
+    box-shadow: 0 0 0 0 rgba(55, 65, 81, 0.7); 
   }
   50% { 
-    box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); 
+    box-shadow: 0 0 0 10px rgba(55, 65, 81, 0); 
   }
 }
 
-.animate-pulse-blue {
-  animation: pulse-blue 2s infinite;
+.animate-pulse-gray {
+  animation: pulse-gray 2s infinite;
 }
 
 /* Ensure proper spacing for compact cards */
@@ -395,17 +381,17 @@ body {
   margin-top: 1.5rem;
 }
 
-/* Enhanced card shadows for blue theme */
-.shadow-blue {
-  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1), 0 2px 4px -1px rgba(37, 99, 235, 0.06);
+/* Enhanced card shadows for neutral theme */
+.shadow-gray {
+  box-shadow: 0 4px 6px -1px rgba(55, 65, 81, 0.1), 0 2px 4px -1px rgba(55, 65, 81, 0.06);
 }
 
-.shadow-blue-lg {
-  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1), 0 4px 6px -2px rgba(37, 99, 235, 0.05);
+.shadow-gray-lg {
+  box-shadow: 0 10px 15px -3px rgba(55, 65, 81, 0.1), 0 4px 6px -2px rgba(55, 65, 81, 0.05);
 }
 
-.shadow-blue-xl {
-  box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.1), 0 10px 10px -5px rgba(37, 99, 235, 0.04);
+.shadow-gray-xl {
+  box-shadow: 0 20px 25px -5px rgba(55, 65, 81, 0.1), 0 10px 10px -5px rgba(55, 65, 81, 0.04);
 }
 
 /* Enhanced Farcaster UI styles */
@@ -433,14 +419,14 @@ body {
 /* Farcaster floating buttons enhanced shadows */
 .farcaster-floating {
   box-shadow: 
-    0 10px 25px rgba(37, 99, 235, 0.3),
+    0 10px 25px rgba(55, 65, 81, 0.3),
     0 4px 10px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .farcaster-floating:hover {
   box-shadow: 
-    0 15px 35px rgba(37, 99, 235, 0.4),
+    0 15px 35px rgba(55, 65, 81, 0.4),
     0 8px 15px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
@@ -499,17 +485,17 @@ body {
 /* Farcaster debug panel enhancements */
 .farcaster-debug {
   backdrop-filter: blur(10px);
-  background: rgba(37, 99, 235, 0.95);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(55, 65, 81, 0.95);
+  border: 1px solid rgba(107, 114, 128, 0.3);
 }
 
 /* Enhanced pulse animation for Farcaster buttons */
 @keyframes farcaster-pulse {
   0%, 100% { 
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); 
+    box-shadow: 0 0 0 0 rgba(55, 65, 81, 0.7); 
   }
   50% { 
-    box-shadow: 0 0 0 15px rgba(37, 99, 235, 0); 
+    box-shadow: 0 0 0 15px rgba(55, 65, 81, 0); 
   }
 }
 

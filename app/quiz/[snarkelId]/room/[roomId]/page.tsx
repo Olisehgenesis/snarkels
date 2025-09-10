@@ -27,7 +27,8 @@ import {
   Settings,
   Crown,
   Coins,
-  LogOut
+  LogOut,
+  AlertTriangle
 } from 'lucide-react';
 import WalletConnectButton from '@/components/WalletConnectButton';
 import AdminControls from '@/components/AdminControls';
@@ -127,6 +128,10 @@ export default function QuizRoomPage() {
   const [currentAnswer, setCurrentAnswer] = useState<{questionId: string, correctAnswer: string, userAnswers: Array<{userId: string, answerId: string, isCorrect: boolean, points: number}>} | null>(null);
   const [showQuestionComplete, setShowQuestionComplete] = useState(false);
   const [showNextQuestion, setShowNextQuestion] = useState(false);
+  
+  // Debug state
+  const [debugStopRequested, setDebugStopRequested] = useState(false);
+  const [debugStopReason, setDebugStopReason] = useState<string>('');
   
   // Notifications
   const [participantLeaveNotification, setParticipantLeaveNotification] = useState<string>('');
@@ -395,6 +400,13 @@ export default function QuizRoomPage() {
       setCurrentAnswer(null);
       setShowQuestionComplete(false);
       setShowNextQuestion(false);
+      
+      // Check if debug stop was requested during countdown
+      if (debugStopRequested) {
+        console.log('Debug stop requested - stopping quiz after question starts');
+        setDebugStopReason('Debug stop requested during countdown - stopping after question');
+        // The question will run normally, but we'll stop after it completes
+      }
     },
     onQuestionTimeUpdate: (timeLeft) => {
       setQuestionTimeLeft(timeLeft);
@@ -403,6 +415,21 @@ export default function QuizRoomPage() {
       setShowAnswerReveal(true);
       setCurrentAnswer(data);
       setShowQuestionComplete(true);
+      
+      // Check if debug stop was requested - stop after this question
+      if (debugStopRequested) {
+        console.log('Debug stop requested - stopping quiz after answer reveal');
+        setDebugStopReason('Debug stop requested - stopping after current question');
+        // Stop the quiz after this question completes
+        setTimeout(() => {
+          if (socket && isAdmin) {
+            socket.emit('endGame', { roomId: room?.id });
+            setDebugStopRequested(false);
+            setDebugStopReason('');
+          }
+        }, 5000); // Give time to show the answer reveal
+        return; // Don't continue with normal flow
+      }
       
       setTimeout(() => {
         setShowQuestionComplete(false);
@@ -419,6 +446,9 @@ export default function QuizRoomPage() {
     onGameEnd: (results) => {
       setGameState('finished');
       setLeaderboard(results);
+      // Reset debug stop when game naturally ends
+      setDebugStopRequested(false);
+      setDebugStopReason('');
     },
     onRoomEmpty: () => {
       setError('All participants have left the room. The quiz has been reset.');
@@ -734,7 +764,7 @@ export default function QuizRoomPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Gamepad2 className="w-16 h-16 mx-auto text-purple-600 mb-4" />
           <h1 className="text-2xl font-handwriting font-bold text-gray-800 mb-2">
@@ -749,7 +779,7 @@ export default function QuizRoomPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Joining quiz room...</p>
@@ -760,7 +790,7 @@ export default function QuizRoomPage() {
 
   if (error || joinError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
           <h1 className="text-2xl font-handwriting font-bold text-gray-800 mb-2">
@@ -795,7 +825,7 @@ export default function QuizRoomPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+    <div className="min-h-screen">
       {/* Mobile-First Responsive Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
@@ -997,16 +1027,21 @@ export default function QuizRoomPage() {
           </div>
         )}
         
-        {/* TV Display for All Participants */}
+        {/* TV Display and Admin Dashboard - Side by Side */}
         {room && snarkel && (
           <div className="mb-6">
-            <div className="bg-black rounded-xl shadow-2xl p-2 sm:p-4 md:p-8 border-2 sm:border-4 border-gray-800 relative overflow-hidden">
+            {isAdmin ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* TV Display */}
+                <div className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 md:p-10 border-2 sm:border-4 border-lime-500 relative overflow-hidden min-h-[400px]">
               <div className="absolute top-1 sm:top-2 left-1 sm:left-2 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
               <div className="absolute top-1 sm:top-2 left-4 sm:left-6 w-2 h-2 sm:w-3 sm:h-3 bg-yellow-500 rounded-full animate-pulse"></div>
               <div className="absolute top-1 sm:top-2 left-7 sm:left-10 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse"></div>
               
-              <div className="text-center text-white">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-handwriting font-bold mb-2 sm:mb-4 text-blue-400">
+              <div className="text-center text-gray-800 py-6 sm:py-8">
+                {gameState !== 'playing' && (
+                  <>
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-handwriting font-bold mb-2 sm:mb-3 text-blue-400">
                   📺 SNARKEL TV
                 </h2>
                 {room?.sessionNumber && (
@@ -1015,18 +1050,20 @@ export default function QuizRoomPage() {
                       Session #{room.sessionNumber}
                     </span>
                   </div>
+                    )}
+                  </>
                 )}
                 
                 {/* Future Start Time Countdown - Prominent Display */}
                 {showFutureStartCountdown && futureStartCountdown !== null && (
-                  <div className="bg-gradient-to-r from-purple-900 via-blue-900 to-indigo-900 rounded-lg p-4 sm:p-6 md:p-8 mb-6 border-2 sm:border-4 border-purple-400 shadow-2xl animate-pulse">
+                  <div className="bg-gradient-to-r from-purple-900 via-blue-900 to-indigo-900 rounded-lg p-3 sm:p-4 md:p-6 mb-4 border-2 sm:border-4 border-purple-400 shadow-2xl animate-pulse">
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-2 sm:gap-4 mb-2 sm:mb-4">
                         <Clock className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 animate-bounce" />
                         <h3 className="text-xl sm:text-2xl md:text-3xl font-handwriting font-bold text-white">⏰ Quiz Starts In</h3>
                         <Clock className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 animate-bounce" />
                       </div>
-                      <div className="text-4xl sm:text-6xl md:text-8xl font-bold text-yellow-400 mb-2 sm:mb-4 font-mono">
+                      <div className="text-3xl sm:text-4xl md:text-6xl font-bold text-yellow-400 mb-2 sm:mb-3 font-mono">
                         {formatTime(futureStartCountdown)}
                       </div>
                       <p className="text-lg sm:text-xl md:text-2xl font-handwriting text-blue-200 mb-2">
@@ -1041,43 +1078,38 @@ export default function QuizRoomPage() {
 
                 {/* Dynamic Content Based on Game State */}
                 {gameState === 'countdown' && countdownDisplay > 0 ? (
-                  <div className="bg-gradient-to-r from-red-900 to-pink-900 rounded-lg p-6 mb-4 animate-pulse">
-                    <div className="text-6xl font-bold text-white mb-2">{formatTime(countdownDisplay)}</div>
-                    <p className="text-xl font-handwriting">Quiz Starting Soon!</p>
-                  </div>
+                  <>
+                    <div className="text-6xl font-bold text-gray-800 mb-2 animate-pulse">{formatTime(countdownDisplay)}</div>
+                    <p className="text-xl font-handwriting text-gray-800">Quiz Starting Soon!</p>
+                  </>
                 ) : gameState === 'waiting' && !showFutureStartCountdown ? (
-                  <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6 mb-4">
-                    <h3 className="text-2xl font-handwriting font-bold text-white mb-4">🎯 Quiz Room Ready</h3>
+                  <div className="bg-gradient-to-r from-lime-600 to-green-600 rounded-lg p-4 mb-3">
+                    <h3 className="text-xl font-handwriting font-bold text-white mb-3">👤 Ready to Start!</h3>
                     <div className="text-center">
-                      <div className="text-6xl font-bold text-yellow-400 mb-2">{participants.length}</div>
-                      <p className="text-blue-200 text-xl">Participants</p>
-                    </div>
-                    <div className="mt-4 text-center">
-                      <p className="text-blue-200 text-lg">
-                        ✅ Ready to start! Anyone can join and play immediately.
-                      </p>
+                      <div className="text-4xl font-bold text-yellow-400 mb-2">{participants.length}</div>
+                      <p className="text-lime-200 text-lg">Participants Joined</p>
                     </div>
                   </div>
                 ) : null}
                 
-                {/* Question Display - Prominent when playing */}
+                {/* Question Display - Directly on TV */}
                 {gameState === 'playing' && currentQuestion && !showAnswerReveal && (
-                  <div className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-lg p-8 mb-6 border-4 border-blue-400 shadow-2xl">
+                  <>
                     <div className="text-center mb-6">
                       <div className="flex items-center justify-center gap-3 mb-4">
-                        <h3 className="text-3xl font-handwriting font-bold text-white">🎯 Question</h3>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-red-800 rounded-lg border-2 border-red-600">
-                          <Clock className="w-6 h-6 text-white animate-pulse" />
-                          <span className="font-bold text-white text-xl">{formatTime(questionTimeLeft)}</span>
+                        <h3 className="text-3xl font-handwriting font-bold text-gray-800">🎯 Question</h3>
+                        <div className="flex items-center gap-2 px-4 py-2 bg-lime-100 rounded-lg border-2 border-lime-500">
+                          <Clock className="w-6 h-6 text-gray-800 animate-pulse" />
+                          <span className="font-bold text-gray-800 text-xl">{formatTime(questionTimeLeft)}</span>
                         </div>
                       </div>
-                      <p className="text-3xl font-handwriting text-white leading-relaxed">{currentQuestion.text}</p>
+                      <p className="text-3xl font-handwriting text-black leading-relaxed">{currentQuestion.text}</p>
                     </div>
                     
                     {/* Enhanced Progress Bar */}
-                    <div className="w-full bg-gray-700 rounded-full h-4 mb-4 border-2 border-gray-600">
+                    <div className="w-full bg-gray-200 rounded-full h-4 mb-4 border-2 border-lime-500">
                       <div 
-                        className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 h-4 rounded-full transition-all duration-1000 ease-linear shadow-lg"
+                        className="bg-gradient-to-r from-lime-400 to-lime-600 h-4 rounded-full transition-all duration-1000 ease-linear shadow-lg"
                         style={{ 
                           width: `${((currentQuestion.timeLimit - questionTimeLeft) / currentQuestion.timeLimit) * 100}%` 
                         }}
@@ -1086,11 +1118,11 @@ export default function QuizRoomPage() {
                     
                     {/* Answer Options Preview */}
                     <div className="text-center">
-                      <p className="text-blue-200 text-lg font-handwriting">
+                      <p className="text-gray-600 text-lg font-handwriting">
                         Select your answer below ↓
                       </p>
                     </div>
-                  </div>
+                  </>
                 )}
 
                 {/* Answer Reveal Display - Prominent after question */}
@@ -1365,15 +1397,15 @@ export default function QuizRoomPage() {
                 {/* Recent Joins - Enhanced display - Hidden during quiz */}
                 {participantTabs.length > 0 && gameState === 'waiting' && (
                   <div className="mb-6">
-                    <h3 className="text-2xl font-handwriting font-bold mb-4 text-center text-yellow-400">🎉 Recent Joins</h3>
+                    <h3 className="text-2xl font-handwriting font-bold mb-4 text-center text-lime-600">🟢 People Who Have Joined</h3>
                     <div className="flex flex-wrap justify-center gap-3">
                       {participantTabs.slice(-3).map((participant, index) => (
                         <div
                           key={participant.id}
                           className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all duration-500 hover:scale-105 ${
                             participant.isAdmin 
-                              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black shadow-lg border-2 border-yellow-300' 
-                              : 'bg-gradient-to-r from-blue-400 to-purple-500 text-black shadow-lg border-2 border-blue-300'
+                              ? 'bg-gradient-to-r from-lime-400 to-green-500 text-black shadow-lg border-2 border-lime-300' 
+                              : 'bg-gradient-to-r from-lime-300 to-lime-400 text-black shadow-lg border-2 border-lime-200'
                           }`}
                           style={{
                             animationDelay: `${index * 200}ms`,
@@ -1382,16 +1414,16 @@ export default function QuizRoomPage() {
                         >
                           <div className="w-5 h-5 rounded-full bg-white bg-opacity-30 flex items-center justify-center">
                             {participant.isAdmin ? (
-                              <Crown className="w-3 h-3" />
+                              <span className="text-lg">👑</span>
                             ) : (
-                              <Users className="w-3 h-3" />
+                              <span className="text-lg">⚫</span>
                             )}
                           </div>
                           <span className="text-sm font-bold">
                             {participant.name}
                           </span>
                           {participant.isAdmin && (
-                            <Crown className="w-3 h-3" />
+                            <span className="text-lg">👑</span>
                           )}
                         </div>
                       ))}
@@ -1431,16 +1463,6 @@ export default function QuizRoomPage() {
                   </div>
                 )}
 
-                {/* Debug Info for Countdown */}
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="fixed bottom-32 left-4 z-50 bg-black bg-opacity-75 text-white p-2 rounded text-xs font-mono">
-                    <div>showFutureStartCountdown: {showFutureStartCountdown.toString()}</div>
-                    <div>futureStartCountdown: {futureStartCountdown}</div>
-                    <div>room.scheduledStartTime: {room?.scheduledStartTime || 'null'}</div>
-                    <div>room.isStarted: {room?.isStarted?.toString()}</div>
-                    <div>gameState: {gameState}</div>
-                  </div>
-                )}
 
                 {/* Join Notification */}
                 {participantJoinNotification && (
@@ -1481,80 +1503,10 @@ export default function QuizRoomPage() {
 
               </div>
             </div>
-          </div>
-        )}
 
-
-
-                 {/* Mobile-First Answer Options */}
-         {gameState === 'playing' && currentQuestion && (
-           <div className="mt-4 sm:mt-6 px-2 sm:px-0">
-             <div className="space-y-2 sm:space-y-3 max-w-2xl mx-auto">
-               {currentQuestion.options.map((option, index) => (
-                 <button
-                   key={option.id}
-                   onClick={() => {
-                     // Immediately submit the answer when clicked
-                     socket?.emit('submitAnswer', {
-                       roomId: room?.id,
-                       questionId: currentQuestion.id,
-                       answerId: option.id,
-                       timeLeft: questionTimeLeft
-                     });
-                     // Disable all buttons after selection
-                     setSelectedAnswers([option.id]);
-                   }}
-                   disabled={selectedAnswers.length > 0}
-                   className={`w-full p-2 sm:p-3 rounded-lg border-2 transition-all duration-300 text-left font-handwriting text-xs sm:text-sm md:text-base ${
-                     selectedAnswers.includes(option.id)
-                       ? 'border-green-500 bg-green-50 shadow-lg scale-[1.02]'
-                       : selectedAnswers.length > 0
-                       ? 'border-gray-300 bg-gray-100 opacity-50 cursor-not-allowed'
-                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:scale-[1.01]'
-                   }`}
-                 >
-                   <div className="flex items-center gap-2 sm:gap-3">
-                     <div className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                       selectedAnswers.includes(option.id)
-                         ? 'border-green-500 bg-green-500'
-                         : 'border-gray-300'
-                     }`}>
-                       {selectedAnswers.includes(option.id) && (
-                         <CheckCircle className="w-2 h-2 sm:w-3 sm:h-3 md:w-4 md:h-4 text-white" />
-                       )}
-                     </div>
-                     <span className="font-medium text-gray-800 leading-tight">{option.text}</span>
-                   </div>
-                 </button>
-               ))}
-             </div>
-             
-             {selectedAnswers.length > 0 && (
-               <div className="mt-4 sm:mt-6 text-center">
-                 <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-100 text-green-800 rounded-lg">
-                   <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                   <span className="font-handwriting font-bold text-sm sm:text-base">Answer Submitted!</span>
-                 </div>
-               </div>
-             )}
-           </div>
-         )}
-
-        {/* Ready Button and Participant Controls for All Non-Admin Users */}
-
-
-
-
-        {/* Show Admin Interface for admin users */}
+              {/* Admin Dashboard - Only show for admins */}
         {isAdmin && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-            {gameState === 'waiting' && (
               <div className="space-y-6">
-
-
-
                 {/* Future Start Time Info for Admin */}
                 {showFutureStartCountdown && futureStartCountdown !== null && (
                   <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-lg p-6 border-l-4 border-purple-400">
@@ -1601,7 +1553,6 @@ export default function QuizRoomPage() {
                 )}
 
                 {/* Enhanced Admin Controls */}
-                {isAdmin && (
                   <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-lg p-6 border-l-4 border-purple-400">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-handwriting font-bold text-gray-800 flex items-center gap-2">
@@ -1679,217 +1630,293 @@ export default function QuizRoomPage() {
                         <span className="hidden sm:inline">Send Message</span>
                         <span className="sm:hidden">Message</span>
                       </button>
-
                     </div>
                   </div>
-                )}
-
-
               </div>
             )}
 
-            {/* Admin Controls for Countdown State */}
-            {gameState === 'countdown' && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-lg p-6 border-l-4 border-orange-400">
+                {/* Debug Controls - Only show for admins */}
+                <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl shadow-lg p-6 border-l-4 border-red-400">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-handwriting font-bold text-gray-800 flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-orange-500" />
-                      🎮 Quiz Starting
+                      <AlertTriangle className="w-5 h-5 text-red-500" />
+                      🐛 Debug Controls
                     </h3>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-orange-100 rounded-full">
-                      <Clock className="w-4 h-4 text-orange-600" />
-                      <span className="text-sm font-medium text-orange-800">Countdown Active</span>
+                    <div className="flex items-center gap-2 px-3 py-1 bg-red-100 rounded-full">
+                      <AlertTriangle className="w-4 h-4 text-red-600" />
+                      <span className="text-sm font-medium text-red-800">Development Only</span>
                     </div>
                   </div>
                   
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                      <h4 className="font-handwriting font-bold text-gray-700 mb-2">Stop Quiz at Next Safe Point</h4>
+                      <p className="text-sm text-gray-600 mb-3">
+                        This will stop the quiz at the next natural stopping point:
+                      </p>
+                      <ul className="text-xs text-gray-500 space-y-1 mb-4">
+                        <li>• If in countdown: Stop immediately</li>
+                        <li>• If playing: Stop after current question</li>
+                        <li>• If waiting: Stop immediately</li>
+                      </ul>
+                      
+                      {debugStopRequested ? (
+                        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                            <span className="text-sm font-medium text-yellow-800">Stop Requested</span>
+                    </div>
+                          <p className="text-xs text-yellow-700 mt-1">{debugStopReason}</p>
+                  </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Stop quiz at next safe point? This will end the current session.')) {
+                              setDebugStopRequested(true);
+                              setDebugStopReason('Debug stop requested - will stop at next safe point');
+                              
+                              // Handle immediate stops
+                              if (gameState === 'waiting' || gameState === 'countdown') {
+                                if (socket && isAdmin) {
+                                  socket.emit('endGame', { roomId: room?.id });
+                                  setDebugStopRequested(false);
+                                  setDebugStopReason('');
+                                }
+                              }
+                            }
+                          }}
+                          className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-handwriting font-bold text-sm"
+                        >
+                          🛑 Stop Quiz (Debug)
+                        </button>
+                      )}
+                        </div>
+                        </div>
+                      </div>
+                    </div>
+            ) : (
+              /* Non-Admin Layout - TV and Answers Side by Side */
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* TV Display */}
+                <div className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 md:p-10 border-2 sm:border-4 border-lime-500 relative overflow-hidden min-h-[400px]">
+                  <div className="absolute top-1 sm:top-2 left-1 sm:left-2 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full animate-pulse"></div>
+                  <div className="absolute top-1 sm:top-2 left-4 sm:left-6 w-2 h-2 sm:w-3 sm:h-3 bg-yellow-500 rounded-full animate-pulse"></div>
+                  <div className="absolute top-1 sm:top-2 left-7 sm:left-10 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  
+                  <div className="text-center text-gray-800 py-6 sm:py-8">
+                    {gameState !== 'playing' && (
+                      <>
+                        <h2 className="text-xl sm:text-2xl md:text-3xl font-handwriting font-bold mb-2 sm:mb-3 text-blue-400">
+                          📺 SNARKEL TV
+                        </h2>
+                        {room?.sessionNumber && (
+                          <div className="text-center mb-2">
+                            <span className="inline-block px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-bold">
+                              Session #{room.sessionNumber}
+                            </span>
+                        </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Future Start Time Countdown - Prominent Display */}
+                    {showFutureStartCountdown && futureStartCountdown !== null && (
+                      <div className="bg-gradient-to-r from-purple-900 via-blue-900 to-indigo-900 rounded-lg p-3 sm:p-4 md:p-6 mb-4 border-2 sm:border-4 border-purple-400 shadow-2xl animate-pulse">
                   <div className="text-center">
-                    <div className="text-4xl font-handwriting font-bold text-orange-600 mb-2">
-                      {formatTime(countdownDisplay || 0)}
-                    </div>
-                    <p className="text-gray-600">Quiz starting soon...</p>
-                  </div>
+                          <div className="flex items-center justify-center gap-2 sm:gap-4 mb-2 sm:mb-4">
+                            <Clock className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 animate-bounce" />
+                            <h3 className="text-xl sm:text-2xl md:text-3xl font-handwriting font-bold text-white">⏰ Quiz Starts In</h3>
+                            <Clock className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-400 animate-bounce" />
+                        </div>
+                          <div className="text-3xl sm:text-4xl md:text-6xl font-bold text-yellow-400 mb-2 sm:mb-3 font-mono">
+                            {formatTime(futureStartCountdown)}
+                      </div>
+                          <p className="text-lg sm:text-xl md:text-2xl font-handwriting text-blue-200 mb-2">
+                            Scheduled Start: {room?.scheduledStartTime ? new Date(room.scheduledStartTime).toLocaleString() : ''}
+                          </p>
+                          <p className="text-base sm:text-lg md:text-xl text-purple-200 font-handwriting">
+                            🎯 Get ready! The quiz will begin automatically
+                          </p>
                 </div>
               </div>
             )}
 
-            {/* Admin Controls for Playing State */}
-            {gameState === 'playing' && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-lg p-6 border-l-4 border-green-400">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-handwriting font-bold text-gray-800 flex items-center gap-2">
-                      <Play className="w-5 h-5 text-green-500" />
-                      🎮 Quiz Active
-                    </h3>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-green-100 rounded-full">
-                      <Play className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-800">Quiz Running</span>
-                    </div>
-                  </div>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <h4 className="font-handwriting font-bold text-gray-700 mb-2">Current Question</h4>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Time Left:</span>
-                          <span className="font-bold text-red-600">{formatTime(questionTimeLeft)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Question:</span>
-                          <span className="font-bold">{currentQuestion?.text?.slice(0, 30)}...</span>
-                        </div>
+                    {/* Dynamic Content Based on Game State */}
+                    {gameState === 'countdown' && countdownDisplay > 0 ? (
+                      <>
+                        <div className="text-6xl font-bold text-gray-800 mb-2 animate-pulse">{formatTime(countdownDisplay)}</div>
+                        <p className="text-xl font-handwriting text-gray-800">Quiz Starting Soon!</p>
+                      </>
+                    ) : gameState === 'waiting' && !showFutureStartCountdown ? (
+                      <div className="bg-gradient-to-r from-lime-600 to-green-600 rounded-lg p-4 mb-3">
+                        <h3 className="text-xl font-handwriting font-bold text-white mb-3">👤 Ready to Start!</h3>
+                        <div className="text-center">
+                          <div className="text-4xl font-bold text-yellow-400 mb-2">{participants.length}</div>
+                          <p className="text-lime-200 text-lg">Participants Joined</p>
+                </div>
                       </div>
-                    </div>
+                    ) : null}
                     
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <h4 className="font-handwriting font-bold text-gray-700 mb-2">Quiz Progress</h4>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Participants:</span>
-                          <span className="font-bold">{participants.length}</span>
+                    {/* Participants List Inside TV Screen */}
+                    {participantTabs.length > 0 && gameState === 'waiting' && (
+                      <div className="mt-4">
+                        <h3 className="text-lg font-handwriting font-bold mb-3 text-center text-lime-600">🟢 People Who Have Joined</h3>
+                        <div className="flex flex-wrap justify-center gap-2">
+                          {participantTabs.map((participant, index) => (
+                            <div
+                              key={participant.id}
+                              className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all duration-500 hover:scale-105 ${
+                                participant.isAdmin 
+                                  ? 'bg-gradient-to-r from-lime-400 to-green-500 text-black shadow-lg border-2 border-lime-300' 
+                                  : 'bg-gradient-to-r from-lime-300 to-lime-400 text-black shadow-lg border-2 border-lime-200'
+                              }`}
+                              style={{
+                                animationDelay: `${index * 200}ms`,
+                                animation: 'fadeInUp 0.5s ease-out forwards'
+                              }}
+                            >
+                              <div className="w-4 h-4 rounded-full bg-white bg-opacity-30 flex items-center justify-center">
+                                {participant.isAdmin ? (
+                                  <span className="text-sm">👑</span>
+                                ) : (
+                                  <span className="text-sm">⚫</span>
+                                )}
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Status:</span>
-                          <span className="font-bold text-green-600">Active</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {gameState === 'finished' && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <div className="text-center mb-6">
-                  <Trophy className="w-16 h-16 mx-auto text-yellow-500 mb-4" />
-                  <h2 className="text-2xl font-handwriting font-bold text-gray-800 mb-2">
-                    Game Finished!
-                  </h2>
-                  <p className="text-gray-600">Here are the final results</p>
-                </div>
-
-                <div className="space-y-4">
-                  {leaderboard.map((player, index) => (
-                    <div key={player.userId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                          index === 0 ? 'bg-yellow-500' :
-                          index === 1 ? 'bg-gray-400' :
-                          index === 2 ? 'bg-orange-500' : 'bg-gray-300'
-                        }`}>
-                          {index + 1}
-                        </div>
-                        <span className="font-handwriting font-medium">{player.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Star className="w-5 h-5 text-yellow-500" />
-                        <span className="font-bold">{player.score} pts</span>
-                      </div>
+                              <span className="text-xs font-bold">
+                                {participant.name}
+                  </span>
+                              {participant.isAdmin && (
+                                <span className="text-sm">👑</span>
+                              )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
+                      </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Room Info */}
-            <div className="bg-white rounded-xl shadow-sm p-6 transition-all duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-handwriting font-bold text-gray-800">
-                  Room Info
+                {/* Answer Options Grid for Non-Admin Users */}
+                {gameState === 'playing' && currentQuestion && (
+                  <div className="space-y-4">
+                    <h3 className="text-2xl font-handwriting font-bold text-gray-800 text-center mb-4">
+                      Choose Your Answer
                 </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {currentQuestion.options.map((option, index) => (
+                        <button
+                          key={option.id}
+                          onClick={() => {
+                            // Immediately submit the answer when clicked
+                            socket?.emit('submitAnswer', {
+                              roomId: room?.id,
+                              questionId: currentQuestion.id,
+                              answerId: option.id,
+                              timeLeft: questionTimeLeft
+                            });
+                          }}
+                          disabled={selectedAnswers.includes(option.id)}
+                          className={`p-4 rounded-lg border-2 transition-all duration-200 font-handwriting text-base sm:text-lg text-center min-h-[80px] flex items-center justify-center relative ${
+                            selectedAnswers.includes(option.id)
+                              ? 'bg-lime-200 border-lime-400 text-gray-600 cursor-not-allowed'
+                              : 'bg-lime-100 border-lime-500 text-black hover:bg-lime-200 hover:border-lime-600 active:scale-95'
+                          }`}
+                        >
+                          <span className="font-medium leading-tight">{option.text}</span>
+                          {selectedAnswers.includes(option.id) && (
+                            <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                              <CheckCircle className="w-4 h-4 text-white" />
               </div>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Participants:</span>
-                  <span className="font-medium">{participants.length}/{room?.maxParticipants}</span>
+                          )}
+                        </button>
+                      ))}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Min to Start:</span>
-                  <span className="font-medium">{room?.minParticipants}</span>
+                    
+                    {selectedAnswers.length > 0 && (
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg border-2 border-green-300">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="font-handwriting font-bold">Answer Submitted!</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Session:</span>
-                  <span className="font-medium">#{room?.sessionNumber || 1}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Status:</span>
-                  <span className={`font-medium ${
-                    room?.isStarted ? 'text-green-600' : 'text-yellow-600'
-                  }`}>
-                    {room?.isStarted ? 'Playing' : 'Waiting'}
-                  </span>
-                </div>
-                {room?.scheduledStartTime && !room.isStarted && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Start Date:</span>
-                    <span className="font-medium text-purple-600">
-                      {new Date(room.scheduledStartTime).toLocaleDateString()}
-                    </span>
                   </div>
                 )}
-                {room?.scheduledStartTime && !room.isStarted && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Start Time:</span>
-                    <span className="font-medium text-purple-600">
-                      {new Date(room.scheduledStartTime).toLocaleTimeString()}
-                    </span>
                   </div>
                 )}
-                {room?.scheduledStartTime && !room.isStarted && (
-                  <div className="pt-2 border-t border-gray-200">
-                    <div className="bg-purple-50 rounded-lg p-2 text-center">
-                      <div className="text-xs text-purple-600 font-medium mb-1">⏰ Scheduled Start</div>
-                      <div className="text-sm font-bold text-purple-700">
-                        {new Date(room.scheduledStartTime).toLocaleString()}
-                      </div>
-                      {showFutureStartCountdown && futureStartCountdown !== null && (
-                        <div className="mt-2 pt-2 border-t border-purple-200">
-                          <div className="text-xs text-purple-600">Time Remaining:</div>
-                          <div className="text-lg font-bold text-purple-800 font-mono">
-                            {formatTime(futureStartCountdown)}
-                          </div>
+
+                {/* Leave Room Button - Hidden during quiz session */}
+                {gameState === 'waiting' && (
+                  <button
+                    onClick={() => router.push('/')}
+                    className="w-full max-w-md inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium border-2 transition-all duration-100 text-black border-black bg-lime-300 hover:bg-lime-400 shadow-[0_4px_0_0_rgba(0,0,0,1)] hover:shadow-[0_6px_0_0_rgba(0,0,0,1)] active:shadow-[0_2px_0_0_rgba(0,0,0,1)] active:translate-y-[2px] max-h-[10vh]"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Leave Room</span>
+                  </button>
+                )}
                         </div>
                       )}
-                    </div>
                   </div>
                 )}
-                {/* Admin Wallet Info */}
-                {participants.find(p => p.isAdmin) && (
-                  <div className="pt-3 border-t border-gray-200">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Quiz Admin:</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                          <span className="font-medium text-purple-600">
-                            {participants.find(p => p.isAdmin)?.user?.address?.slice(0, 6) || 'Unknown'}...{participants.find(p => p.isAdmin)?.user?.address?.slice(-4) || ''}
-                          </span>
+
+        {/* Mobile-First Answer Options - Only for Admin Users */}
+        {gameState === 'playing' && currentQuestion && isAdmin && (
+           <div className="mt-4 sm:mt-6 px-2 sm:px-0">
+             <div className="space-y-2 sm:space-y-3 max-w-2xl mx-auto">
+               {currentQuestion.options.map((option, index) => (
+                 <button
+                   key={option.id}
+                   onClick={() => {
+                     // Immediately submit the answer when clicked
+                     socket?.emit('submitAnswer', {
+                       roomId: room?.id,
+                       questionId: currentQuestion.id,
+                       answerId: option.id,
+                       timeLeft: questionTimeLeft
+                     });
+                     // Disable all buttons after selection
+                     setSelectedAnswers([option.id]);
+                   }}
+                   disabled={selectedAnswers.length > 0}
+                   className={`w-full p-2 sm:p-3 rounded-lg border-2 transition-all duration-300 text-left font-handwriting text-xs sm:text-sm md:text-base ${
+                     selectedAnswers.includes(option.id)
+                       ? 'border-green-500 bg-green-50 shadow-lg scale-[1.02]'
+                       : selectedAnswers.length > 0
+                       ? 'border-gray-300 bg-gray-100 opacity-50 cursor-not-allowed'
+                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:scale-[1.01]'
+                   }`}
+                 >
+                   <div className="flex items-center gap-2 sm:gap-3">
+                     <div className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                       selectedAnswers.includes(option.id)
+                         ? 'border-green-500 bg-green-500'
+                         : 'border-gray-300'
+                     }`}>
+                       {selectedAnswers.includes(option.id) && (
+                         <CheckCircle className="w-2 h-2 sm:w-3 sm:h-3 md:w-4 md:h-4 text-white" />
+                       )}
                         </div>
+                     <span className="font-medium text-gray-800 leading-tight">{option.text}</span>
                       </div>
-                      <div className="text-xs text-gray-500 font-mono bg-gray-100 p-2 rounded break-all">
-                        {participants.find(p => p.isAdmin)?.user?.address || 'Unknown'}
+                 </button>
+               ))}
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {participants.find(p => p.isAdmin)?.user?.name || 'Unknown'}
-                      </div>
+
+             {selectedAnswers.length > 0 && (
+               <div className="mt-4 sm:mt-6 text-center">
+                 <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-100 text-green-800 rounded-lg">
+                   <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                   <span className="font-handwriting font-bold text-sm sm:text-base">Answer Submitted!</span>
                     </div>
                   </div>
                 )}
               </div>
-            </div>
+                )}
+
+        {/* Ready Button and Participant Controls for All Non-Admin Users */}
 
 
 
 
-           </div>
-         </div>
-        )}
        </div>
 
        {/* Countdown Modal */}

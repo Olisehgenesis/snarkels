@@ -53,14 +53,20 @@ export async function POST(request: NextRequest) {
 
     if (!snarkel) {
       return NextResponse.json(
-        { error: 'Snarkel not found' },
+        { 
+          error: 'Snarkel not found',
+          success: false 
+        },
         { status: 404 }
       );
     }
 
     if (!snarkel.isActive) {
       return NextResponse.json(
-        { error: 'This snarkel is not active' },
+        { 
+          error: 'This snarkel is not active',
+          success: false 
+        },
         { status: 400 }
       );
     }
@@ -71,7 +77,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           verificationRequired: true,
           snarkelId: snarkel.id,
-          message: 'This quiz requires identity verification'
+          message: 'This snakel requires identity verification',
+          success: false
         });
       }
     }
@@ -168,7 +175,8 @@ export async function POST(request: NextRequest) {
     // Check if max participants reached
     if (snarkel.maxParticipants && snarkel.participants.length >= snarkel.maxParticipants) {
       return NextResponse.json({
-        error: 'Maximum participants reached for this snarkel'
+        error: 'Maximum participants reached for this snarkel',
+        success: false
       }, { status: 400 });
     }
 
@@ -319,7 +327,10 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Join snarkel error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: error.message || 'Internal server error',
+        success: false 
+      },
       { status: 500 }
     );
   }

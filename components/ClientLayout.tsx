@@ -11,7 +11,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-br from-sky-100 via-blue-50 to-indigo-100"
+      className="min-h-screen"
       style={{
         paddingTop: isFarcasterApp ? (context?.client?.safeAreaInsets?.top ?? 0) : 0,
         paddingBottom: isFarcasterApp ? (context?.client?.safeAreaInsets?.bottom ?? 0) : 0,

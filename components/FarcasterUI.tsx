@@ -26,15 +26,15 @@ export function FarcasterUI({ children }: FarcasterUIProps) {
             <div className="relative group">
               <button
                 onClick={callReady}
-                className="farcaster-button farcaster-floating bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white p-4 rounded-2xl shadow-2xl transition-all duration-300 transform hover:scale-110 border-2 border-red-300 animate-pulse-blue"
+                className="farcaster-button farcaster-floating text-gray-700 p-4 rounded-2xl border-2 border-black bg-lime-300 hover:bg-lime-400 shadow-[0_4px_0_0_rgba(0,0,0,1)] hover:shadow-[0_6px_0_0_rgba(0,0,0,1)] active:shadow-[0_2px_0_0_rgba(0,0,0,1)] active:translate-y-[2px] transition-all duration-100"
                 title="Dismiss Splash Screen"
               >
                 <CheckCircle className="w-6 h-6" />
               </button>
               {/* Tooltip */}
-              <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-black/90 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none farcaster-tooltip">
+              <div className="absolute bottom-full right-0 mb-2 px-3 py-2 text-gray-700 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none farcaster-tooltip">
                 Dismiss Splash Screen
-                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black/90"></div>
+                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-300"></div>
               </div>
             </div>
           )}
