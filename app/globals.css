@@ -1,0 +1,526 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+
+
+/* Main background color is now set in layout.tsx */
+
+body {
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  /* Fallback background color */
+  background-color: #CBBD93;
+  /* HD Background Image Quality */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Force hardware acceleration for smoother rendering */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: background-image;
+  /* Optimize background image rendering */
+  background-blend-mode: normal;
+}
+
+/* High-quality background image rendering using pseudo-element */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/bg.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  z-index: -1;
+  /* Optimize rendering for HD quality */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Smooth scaling */
+  image-rendering: -webkit-optimize-contrast;
+  -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* Mobile-first font approach */
+.font-handwriting {
+  /* On mobile, use a clean, readable font */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+/* On larger screens, use the handwriting font */
+@media (min-width: 768px) {
+  .font-handwriting {
+    font-family: 'Kalam', cursive;
+    font-weight: 400;
+    letter-spacing: normal;
+  }
+}
+
+/* On very large screens, enhance the handwriting experience */
+@media (min-width: 1024px) {
+  .font-handwriting {
+    font-family: 'Kalam', cursive;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 767px) {
+  .font-handwriting {
+    /* Ensure good readability on mobile */
+    line-height: 1.4;
+    /* Slightly increase font weight for better mobile readability */
+    font-weight: 600;
+    /* Optimize text rendering for mobile */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Ensure consistent font size on mobile */
+    font-size-adjust: 0.5;
+  }
+  
+  /* Ensure ActionBar doesn't overlap content on mobile */
+  .pb-28 {
+    padding-bottom: 7rem; /* 112px - enough space for ActionBar */
+  }
+  
+  /* Prevent horizontal overflow on mobile */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Ensure cards don't exceed viewport width */
+  .max-w-sm {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  /* TV Countdown positioning for mobile */
+  .bottom-20 {
+    bottom: 5rem; /* 80px - above ActionBar */
+  }
+  
+  /* Create page animations */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+  }
+  
+  @keyframes bounce-slow {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-bounce-slow {
+    animation: bounce-slow 3s ease-in-out infinite;
+  }
+}
+
+/* Line clamp utilities for text truncation */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/* Ensure countdown doesn't overlap with ActionBar */
+.z-40 {
+  z-index: 40;
+}
+
+/* Ensure smooth font loading */
+.font-handwriting {
+  font-display: swap;
+}
+
+/* Optimize for high-DPI mobile displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .font-handwriting {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(5deg); }
+  50% { transform: translateY(-20px) rotate(0deg); }
+  75% { transform: translateY(-10px) rotate(-5deg); }
+}
+
+@keyframes float-reverse {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(10px) rotate(-5deg); }
+  50% { transform: translateY(20px) rotate(0deg); }
+  75% { transform: translateY(10px) rotate(5deg); }
+}
+
+@keyframes float-complex {
+  0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+  25% { transform: translateY(-15px) rotateX(180deg) rotateY(90deg); }
+  50% { transform: translateY(-30px) rotateX(360deg) rotateY(180deg); }
+  75% { transform: translateY(-15px) rotateX(180deg) rotateY(270deg); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 5s ease-in-out infinite;
+}
+
+.animate-float-complex {
+  animation: float-complex 8s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .animate-float-complex {
+    animation: none;
+  }
+}
+
+
+
+/* Custom animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Custom scrollbar hiding for quiz carousel */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Smooth scrolling for quiz carousel */
+.quiz-carousel {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Custom animations for quiz cards */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-right {
+  animation: slideInFromRight 0.5s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInFromLeft 0.5s ease-out;
+}
+
+/* Neutral theme utility classes */
+.bg-gray-gradient {
+  background: linear-gradient(135deg, var(--primary-gray) 0%, var(--dark-gray) 100%);
+}
+
+.bg-gray-light {
+  background-color: var(--light-gray);
+}
+
+.text-gray-primary {
+  color: var(--primary-gray);
+}
+
+.text-gray-dark {
+  color: var(--dark-gray);
+}
+
+.border-gray-accent {
+  border-color: var(--accent-gray);
+}
+
+/* Compact card styles */
+.compact-quiz-card {
+  height: auto;
+  min-height: 80px;
+  max-height: 120px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.compact-quiz-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(55, 65, 81, 0.15);
+}
+
+/* Playful hover effects */
+.playful-hover {
+  transition: all 0.3s ease;
+}
+
+.playful-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(55, 65, 81, 0.15);
+}
+
+/* Glassmorphism effect */
+.glassmorphism {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Enhanced floating animations for quiz icons */
+@keyframes float-quiz {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg) scale(1); 
+  }
+  25% { 
+    transform: translateY(-8px) rotate(2deg) scale(1.05); 
+  }
+  50% { 
+    transform: translateY(-15px) rotate(0deg) scale(1.1); 
+  }
+  75% { 
+    transform: translateY(-8px) rotate(-2deg) scale(1.05); 
+  }
+}
+
+.animate-float-quiz {
+  animation: float-quiz 4s ease-in-out infinite;
+}
+
+/* Button pulse effect */
+@keyframes pulse-gray {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(55, 65, 81, 0.7); 
+  }
+  50% { 
+    box-shadow: 0 0 0 10px rgba(55, 65, 81, 0); 
+  }
+}
+
+.animate-pulse-gray {
+  animation: pulse-gray 2s infinite;
+}
+
+/* Ensure proper spacing for compact cards */
+.space-y-4 > .compact-quiz-card:not(:first-child) {
+  margin-top: 1rem;
+}
+
+.space-y-6 > .compact-quiz-card:not(:first-child) {
+  margin-top: 1.5rem;
+}
+
+/* Enhanced card shadows for neutral theme */
+.shadow-gray {
+  box-shadow: 0 4px 6px -1px rgba(55, 65, 81, 0.1), 0 2px 4px -1px rgba(55, 65, 81, 0.06);
+}
+
+.shadow-gray-lg {
+  box-shadow: 0 10px 15px -3px rgba(55, 65, 81, 0.1), 0 4px 6px -2px rgba(55, 65, 81, 0.05);
+}
+
+.shadow-gray-xl {
+  box-shadow: 0 20px 25px -5px rgba(55, 65, 81, 0.1), 0 10px 10px -5px rgba(55, 65, 81, 0.04);
+}
+
+/* Enhanced Farcaster UI styles */
+.farcaster-button {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.farcaster-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.farcaster-button:hover::before {
+  left: 100%;
+}
+
+/* Farcaster floating buttons enhanced shadows */
+.farcaster-floating {
+  box-shadow: 
+    0 10px 25px rgba(55, 65, 81, 0.3),
+    0 4px 10px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.farcaster-floating:hover {
+  box-shadow: 
+    0 15px 35px rgba(55, 65, 81, 0.4),
+    0 8px 15px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Farcaster context display animations */
+.farcaster-context {
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Farcaster tooltip animations */
+.farcaster-tooltip {
+  animation: fadeInScale 0.2s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive Farcaster buttons for mobile */
+@media (max-width: 768px) {
+  .farcaster-floating {
+    transform: scale(0.9);
+  }
+  
+  .farcaster-floating:hover {
+    transform: scale(1);
+  }
+  
+  /* Stack buttons horizontally on very small screens */
+  @media (max-width: 480px) {
+    .farcaster-button-stack {
+      flex-direction: row;
+      gap: 0.5rem;
+    }
+  }
+}
+
+/* Farcaster debug panel enhancements */
+.farcaster-debug {
+  backdrop-filter: blur(10px);
+  background: rgba(55, 65, 81, 0.95);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+/* Enhanced pulse animation for Farcaster buttons */
+@keyframes farcaster-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(55, 65, 81, 0.7); 
+  }
+  50% { 
+    box-shadow: 0 0 0 15px rgba(55, 65, 81, 0); 
+  }
+}
+
+.animate-farcaster-pulse {
+  animation: farcaster-pulse 2s infinite;
+}
