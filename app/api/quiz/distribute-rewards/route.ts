@@ -299,9 +299,20 @@ export async function POST(request: NextRequest) {
         const totalPool = parseFloat(reward.totalRewardPool || '0');
         
         // Use predefined reward amounts if available, otherwise distribute proportionally
-        if (reward.rewardAmounts && Array.isArray(reward.rewardAmounts) && reward.rewardAmounts.length > 0) {
+        // Parse rewardAmounts string for SQLite compatibility
+        let parsedRewardAmounts: number[] = [];
+        try {
+          parsedRewardAmounts = reward.rewardAmounts 
+            ? JSON.parse(reward.rewardAmounts as string)
+            : [];
+        } catch (e) {
+          // Fall back to array if already parsed
+          parsedRewardAmounts = Array.isArray(reward.rewardAmounts) ? reward.rewardAmounts : [];
+        }
+        
+        if (parsedRewardAmounts && Array.isArray(parsedRewardAmounts) && parsedRewardAmounts.length > 0) {
           distributionAmounts = topWinners.map((participant, index) => {
-            const rewardAmount = (reward.rewardAmounts as number[])[index] || 0;
+            const rewardAmount = parsedRewardAmounts[index] || 0;
             const amount = (rewardAmount / 100) * totalPool; // Convert percentage to amount
             return {
               userId: participant.userId,

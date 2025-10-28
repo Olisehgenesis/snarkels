@@ -70,7 +70,8 @@ export async function POST(request: NextRequest) {
         network: rewardConfig.chainId === 42220 ? 'Celo Mainnet' : 'Base',
         chainId: rewardConfig.chainId,
         totalWinners: rewardConfig.totalWinners,
-        rewardAmounts: rewardConfig.rewardAmounts,
+        // Stringify rewardAmounts array for SQLite compatibility
+        rewardAmounts: rewardConfig.rewardAmounts ? JSON.stringify(rewardConfig.rewardAmounts) : undefined,
         totalRewardPool: rewardConfig.totalRewardPool,
         minParticipants: rewardConfig.minParticipants,
         pointsWeight: rewardConfig.pointsWeight,

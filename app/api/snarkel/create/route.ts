@@ -261,7 +261,10 @@ export async function POST(request: NextRequest) {
         network: rewards.network && rewards.network.trim() !== '' ? rewards.network : getNetworkName(rewards.chainId),
         chainId: rewards.chainId,
         totalWinners: !rewards.rewardAllParticipants ? rewards.totalWinners : undefined,
-        rewardAmounts: !rewards.rewardAllParticipants ? rewards.rewardAmounts : undefined,
+        // Stringify rewardAmounts array for SQLite compatibility
+        rewardAmounts: !rewards.rewardAllParticipants && rewards.rewardAmounts 
+          ? JSON.stringify(rewards.rewardAmounts) 
+          : undefined,
         totalRewardPool: rewards.totalRewardPool,
         minParticipants: rewards.minParticipants,
         pointsWeight: rewards.pointsWeight,

@@ -187,6 +187,14 @@ export async function GET(
       // Create detailed question breakdown
       const questionBreakdown = submission.answers.map((answer: any) => {
         const question = questions.find(q => q.id === answer.questionId);
+        // Parse selectedOptions string back to array for SQLite compatibility
+        let parsedSelectedOptions = [];
+        try {
+          parsedSelectedOptions = answer.selectedOptions ? JSON.parse(answer.selectedOptions) : [];
+        } catch (e) {
+          // If it's already an array or invalid, use as is
+          parsedSelectedOptions = Array.isArray(answer.selectedOptions) ? answer.selectedOptions : [];
+        }
         return {
           questionId: answer.questionId,
           questionText: question?.text || 'Unknown Question',
@@ -194,7 +202,7 @@ export async function GET(
           pointsEarned: answer.pointsEarned || 0,
           timeToAnswer: answer.timeToAnswer,
           timeLimit: question?.timeLimit || 0,
-          selectedOptions: answer.selectedOptions,
+          selectedOptions: parsedSelectedOptions,
           correctOption: question?.options?.find((opt: any) => opt.isCorrect)?.text || 'Unknown',
           maxPoints: question?.points || 0
         };

@@ -13,25 +13,31 @@ export async function POST(request: NextRequest) {
     }
 
     const lower = wallet.toLowerCase()
+    
+    // Stringify metadata for SQLite compatibility
+    const metadataString = metadata ? JSON.stringify(metadata) : undefined
 
     const user = await prisma.user.upsert({
       where: { address: lower },
       create: {
         address: lower,
         name: name ?? null,
-        metadata: metadata ?? undefined,
+        metadata: metadataString ?? "{}",
       },
       update: {
         name: name ?? undefined,
-        metadata: metadata ?? undefined,
+        metadata: metadataString ?? undefined,
       },
     })
+
+    // Parse metadata string back to object
+    const parsedMetadata = user.metadata ? JSON.parse(user.metadata) : null
 
     return NextResponse.json({
       id: user.id,
       wallet: user.address,
       name: user.name ?? null,
-      metadata: user.metadata ?? null,
+      metadata: parsedMetadata,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     })
@@ -51,12 +57,15 @@ export async function GET(request: NextRequest) {
   const user = await prisma.user.findUnique({ where: { address: wallet.toLowerCase() } })
   if (!user) return NextResponse.json({ exists: false }, { status: 200 })
 
+  // Parse metadata string back to object
+  const parsedMetadata = user.metadata ? JSON.parse(user.metadata) : null
+
   return NextResponse.json({
     exists: true,
     id: user.id,
     wallet: user.address,
     name: user.name ?? null,
-    metadata: user.metadata ?? null,
+    metadata: parsedMetadata,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   })

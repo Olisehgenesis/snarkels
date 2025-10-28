@@ -6,19 +6,17 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-enum RewardType {
-  QUADRATIC
-  LINEAR
-}
+// Enum converted to String for SQLite compatibility
+// Use "QUADRATIC" or "LINEAR" as values
 
 model User {
   id          String   @id @default(cuid())
   address     String   @unique
-  metadata    Json     @default("{}")
+  metadata    String   @default("{}")
   name        String?
   email       String?
   createdAt   DateTime @default(now())
@@ -138,7 +136,7 @@ model VerificationAttempt {
   snarkelId        String?
   verificationType String
   status           String
-  proofData        Json?
+  proofData        String?
   verifiedAt       DateTime?
   expiresAt        DateTime?
   createdAt        DateTime  @default(now())
@@ -206,7 +204,7 @@ model Submission {
 model Answer {
   id              String   @id @default(cuid())
   questionId      String
-  selectedOptions String[]
+  selectedOptions String
   isCorrect       Boolean
   pointsEarned    Int      @default(0)
   timeToAnswer    Int?
@@ -262,7 +260,7 @@ model RoomParticipant {
 
 model SnarkelReward {
   id                     String     @id @default(cuid())
-  rewardType             RewardType
+  rewardType             String
   tokenAddress           String
   tokenSymbol            String
   tokenName              String
@@ -272,7 +270,7 @@ model SnarkelReward {
   onchainSessionId       String?
   rewardAllParticipants  Boolean    @default(false)
   totalWinners           Int?
-  rewardAmounts          Json?
+  rewardAmounts          String?
   totalRewardPool        String?
   minParticipants        Int?
   pointsWeight           Float?

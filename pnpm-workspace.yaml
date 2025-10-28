@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - '@reown/appkit'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - secp256k1

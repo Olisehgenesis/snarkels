@@ -76,17 +76,17 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Save verification attempt
+        // Save verification attempt - stringify proofData for SQLite compatibility
         await prisma.verificationAttempt.create({
           data: {
             userId: user.id,
             verificationType: 'self_protocol',
             status: 'success',
-            proofData: {
+            proofData: JSON.stringify({
               attestationId,
               disclosedData,
               verificationResult: result
-            },
+            }),
             verifiedAt: new Date(),
           }
         });
