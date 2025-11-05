@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client/edge';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -66,10 +66,8 @@ export async function POST(request: NextRequest) {
         creator: snarkel.creator
       }
     });
-
   } catch (error: any) {
     console.error('Error fetching snarkel info:', error);
-    
     return NextResponse.json(
       { error: 'Failed to fetch snarkel information' },
       { status: 500 }

@@ -364,6 +364,22 @@ export default function AIGenerateSnarkelModal({
                 </div>
               </div>
 
+              {/* Use This Quiz Button - Moved to Top */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleUseQuiz}
+                  className="flex-1 py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"
+                >
+                  Use This Quiz
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="flex-1 py-3 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Generate New Quiz
+                </button>
+              </div>
+
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">{generatedQuiz.title}</h3>
                 <p className="text-gray-600 mb-4">{generatedQuiz.description}</p>
@@ -399,21 +415,6 @@ export default function AIGenerateSnarkelModal({
                     </div>
                   ))}
                 </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleUseQuiz}
-                  className="flex-1 py-3 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                >
-                  Use This Quiz
-                </button>
-                <button
-                  onClick={handleReset}
-                  className="flex-1 py-3 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  Generate New Quiz
-                </button>
               </div>
             </div>
           )}

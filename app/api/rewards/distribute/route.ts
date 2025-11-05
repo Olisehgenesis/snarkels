@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Hex } from 'viem';
 import { getReferralDataSuffix, submitDivviReferral } from '@/lib/divvi';
-import { PrismaClient } from '@prisma/client/edge';
+import { PrismaClient } from '@prisma/client';
 import { privateKeyToAccount } from 'viem/accounts' ;
 import { createWalletClient, createPublicClient, http, parseEther, getAddress } from 'viem';
 import { celo, base } from 'viem/chains';

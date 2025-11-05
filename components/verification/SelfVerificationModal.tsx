@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { SelfQRcodeWrapper, SelfAppBuilder, type SelfApp } from '@selfxyz/qrcode';
+import { SelfQRcodeWrapper, SelfAppBuilder } from '@selfxyz/qrcode';
 import { getUniversalLink } from '@selfxyz/core';
 import { useAccount } from 'wagmi';
 import WalletConnectButton from '@/components/WalletConnectButton';
@@ -19,7 +19,8 @@ export default function SelfVerificationModal({
   onSuccess,
   snarkelId
 }: SelfVerificationModalProps) {
-  const [selfApp, setSelfApp] = useState<SelfApp | null>(null);
+  // Loosen typing to avoid cross-package version type conflicts
+  const [selfApp, setSelfApp] = useState<any | null>(null);
   const [universalLink, setUniversalLink] = useState("");
   const { address, isConnected } = useAccount();
 
@@ -44,7 +45,8 @@ export default function SelfVerificationModal({
         }).build();
 
         setSelfApp(app);
-        setUniversalLink(getUniversalLink(app));
+        // Cast to any to avoid type mismatch between @selfxyz/common versions
+        setUniversalLink(getUniversalLink(app as any));
       } catch (error) {
         console.error('Failed to initialize Self app:', error);
       }

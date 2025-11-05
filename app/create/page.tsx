@@ -17,7 +17,6 @@ import toast from 'react-hot-toast';
 import FarcasterUserProfile from '@/components/FarcasterUserProfile';
 import useFarcasterCelebration from '@/hooks/useFarcasterCelebration';
 import FarcasterCelebration from '@/components/FarcasterCelebration';
-import BottomNavigation from '@/components/BottomNavigation';
 
 // Progress Modal Component
 interface ProgressStep {
@@ -1249,6 +1248,68 @@ export default function SnarkelCreationPage() {
                   }}
                 />
               </div>
+              
+              {/* Navigation Buttons - Moved to Top */}
+              <div className="flex items-center gap-3 pb-2">
+                {/* Back button - show on all tabs except first */}
+                {activeTab !== 'details' && (
+                  <button
+                    onClick={() => {
+                      const tabIndex = tabs.findIndex(tab => tab.id === activeTab);
+                      if (tabIndex > 0) {
+                        setActiveTab(tabs[tabIndex - 1].id);
+                      }
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-handwriting font-medium text-sm"
+                  >
+                    <ArrowLeft size={16} />
+                    <span className="hidden sm:inline">Back</span>
+                  </button>
+                )}
+                
+                {/* Next/Create button */}
+                {activeTab === 'spam' ? (
+                  // Last tab - show Create button
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!isTabCompleted('details') || !isTabCompleted('questions') || isSubmitting}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all transform hover:scale-105 font-handwriting font-bold shadow-md text-sm min-h-[44px]"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span className="hidden sm:inline">
+                          {snarkel.rewards.enabled ? 'Creating with Rewards...' : 'Creating...'}
+                        </span>
+                        <span className="sm:hidden">
+                          {snarkel.rewards.enabled ? 'Creating...' : 'Creating...'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} />
+                        <span className="hidden sm:inline">
+                          {snarkel.rewards.enabled ? 'Create with Rewards' : 'Create Snarkel'}
+                        </span>
+                        <span className="sm:hidden">
+                          {snarkel.rewards.enabled ? 'Create Quiz' : 'Create Quiz'}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  // Other tabs - show Next button
+                  <button
+                    onClick={handleNextTab}
+                    disabled={isSubmitting}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all transform hover:scale-105 font-handwriting font-bold shadow-md text-sm min-h-[44px] ml-auto"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="sm:hidden">Continue</span>
+                    <ArrowRight size={16} />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Responsive Layout: Vertical tabs on mobile, horizontal on desktop */}
@@ -1988,68 +2049,6 @@ export default function SnarkelCreationPage() {
                        of {tabs.length}
                      </span>
                    </div>
-                   
-                   {/* Action Buttons - Mobile: Full width, Desktop: Right side */}
-                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 order-1 lg:order-2 w-full lg:w-auto">
-                     {/* Back button - show on all tabs except first */}
-                     {activeTab !== 'details' && (
-                       <button
-                         onClick={() => {
-                           const tabIndex = tabs.findIndex(tab => tab.id === activeTab);
-                           if (tabIndex > 0) {
-                             setActiveTab(tabs[tabIndex - 1].id);
-                           }
-                         }}
-                         className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-handwriting font-medium text-sm lg:text-base"
-                       >
-                         <ArrowLeft size={16} />
-                         <span className="hidden sm:inline">Back</span>
-                       </button>
-                     )}
-                     
-                     {/* Next/Create button - Mobile: Full width, Desktop: Auto width */}
-                     {activeTab === 'spam' ? (
-                       // Last tab - show Create button
-                       <button
-                         onClick={handleSubmit}
-                         disabled={!isTabCompleted('details') || !isTabCompleted('questions') || isSubmitting}
-                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all transform hover:scale-105 font-handwriting font-bold shadow-md text-sm lg:text-base min-h-[44px]"
-                       >
-                         {isSubmitting ? (
-                           <>
-                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                             <span className="hidden sm:inline">
-                               {snarkel.rewards.enabled ? 'Creating with Rewards...' : 'Creating...'}
-                             </span>
-                             <span className="sm:hidden">
-                               {snarkel.rewards.enabled ? 'Creating...' : 'Creating...'}
-                             </span>
-                           </>
-                         ) : (
-                           <>
-                             <Save size={16} />
-                             <span className="hidden sm:inline">
-                               {snarkel.rewards.enabled ? 'Create with Rewards' : 'Create Snarkel'}
-                             </span>
-                             <span className="sm:hidden">
-                               {snarkel.rewards.enabled ? 'Create Quiz' : 'Create Quiz'}
-                             </span>
-                           </>
-                         )}
-                       </button>
-                     ) : (
-                       // Other tabs - show Next button
-                       <button
-                         onClick={handleNextTab}
-                         disabled={isSubmitting}
-                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:from-green-600 hover:to-emerald-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all transform hover:scale-105 font-handwriting font-bold shadow-md text-sm lg:text-base min-h-[44px]"
-                       >
-                         <span className="hidden sm:inline">Next</span>
-                         <span className="sm:hidden">Continue</span>
-                         <ArrowRight size={16} />
-                       </button>
-                     )}
-                   </div>
                  </div>
                  
                  {/* Wallet Error Display - Mobile: Below buttons */}
@@ -2251,8 +2250,7 @@ export default function SnarkelCreationPage() {
        />
      )}
      
-     {/* Bottom Navigation */}
-     <BottomNavigation />
+     {/* Bottom Navigation - Hidden on create page */}
    </div>
    </ErrorBoundary>
  );

@@ -26,14 +26,83 @@ const selfBackendVerifier = new SelfBackendVerifier(
 
 export async function POST(request: NextRequest) {
   try {
-    const { attestationId, proof, publicSignals, userContextData, userAddress } = await request.json();
+    const body = await request.json();
+    const { attestationId, proof, publicSignals, userContextData, userAddress } = body;
 
-    // Verify all required fields are present
-    if (!proof || !publicSignals || !attestationId || !userContextData || !userAddress) {
+    // Log received data for debugging (remove sensitive data in production)
+    console.log('Verification request received:', {
+      hasAttestationId: !!attestationId,
+      hasProof: !!proof,
+      hasPublicSignals: !!publicSignals,
+      hasUserContextData: !!userContextData,
+      hasUserAddress: !!userAddress,
+      userContextDataType: typeof userContextData,
+      userContextDataLength: typeof userContextData === 'string' ? userContextData.length : 'N/A'
+    });
+
+    // Verify required fields are present
+    if (!proof || !publicSignals || !attestationId || !userContextData) {
+      console.error('Missing required fields:', {
+        proof: !!proof,
+        publicSignals: !!publicSignals,
+        attestationId: !!attestationId,
+        userContextData: !!userContextData
+      });
       return NextResponse.json({
-        message: "Proof, publicSignals, attestationId, userContextData, and userAddress are required",
+        message: "Proof, publicSignals, attestationId, and userContextData are required",
       }, { status: 400 });
     }
+
+    // Extract user address from userContextData if not provided directly
+    // userContextData contains the userId (wallet address in hex format) when userIdType is 'hex'
+    let extractedAddress = userAddress;
+    
+    if (!extractedAddress && userContextData) {
+      // userContextData is a hex string containing the userId (wallet address)
+      // Try to extract address from userContextData
+      let addressFromContext: string | null = null;
+      
+      if (typeof userContextData === 'string') {
+        // If it's a string, check if it's a hex address
+        const cleaned = userContextData.trim();
+        if (cleaned.startsWith('0x')) {
+          addressFromContext = cleaned.toLowerCase();
+        } else {
+          // Try adding 0x prefix
+          addressFromContext = `0x${cleaned}`.toLowerCase();
+        }
+        
+        // Validate it looks like an Ethereum address (42 chars including 0x)
+        if (addressFromContext.length === 42 && /^0x[a-f0-9]{40}$/i.test(addressFromContext)) {
+          extractedAddress = addressFromContext;
+        } else {
+          console.warn('userContextData does not appear to be a valid Ethereum address:', {
+            length: addressFromContext.length,
+            format: addressFromContext.substring(0, 10) + '...'
+          });
+        }
+      } else {
+        console.warn('userContextData is not a string:', typeof userContextData);
+      }
+    }
+
+    // Ensure we have an address to work with
+    if (!extractedAddress) {
+      console.error('Could not extract user address from request:', {
+        userAddressProvided: !!userAddress,
+        userContextDataType: typeof userContextData,
+        userContextDataSample: typeof userContextData === 'string' ? userContextData.substring(0, 50) : userContextData
+      });
+      return NextResponse.json({
+        message: "User address is required. Provide userAddress or ensure userContextData contains a valid Ethereum address.",
+        debug: {
+          userAddressProvided: !!userAddress,
+          userContextDataReceived: !!userContextData
+        }
+      }, { status: 400 });
+    }
+
+    console.log('Using extracted address:', extractedAddress);
 
     // Verify the proof
     const result = await selfBackendVerifier.verify(
@@ -51,14 +120,14 @@ export async function POST(request: NextRequest) {
       try {
         // Find or create user by wallet address
         let user = await prisma.user.findUnique({
-          where: { address: userAddress }
+          where: { address: extractedAddress }
         });
 
         if (!user) {
           // Create new user if they don't exist
           user = await prisma.user.create({
             data: {
-              address: userAddress,
+              address: extractedAddress,
               isVerified: true,
               verificationMethod: 'self_protocol',
               verifiedAt: new Date(),

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client/edge';
+import { PrismaClient } from '@prisma/client';
 import { isValidWalletAddress } from '@/lib/wallet-utils';
 
 const prisma = new PrismaClient();

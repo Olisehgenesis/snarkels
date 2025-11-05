@@ -6,12 +6,15 @@ import { useAccount } from 'wagmi';
 import { ArrowRight, Loader2, Menu, X } from 'lucide-react';
 import { FarcasterUI } from '@/components/FarcasterUI';
 import WalletConnectButton from '@/components/WalletConnectButton';
+import SelfVerificationModal from '@/components/verification/SelfVerificationModal';
 
 export default function HomePage() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [pendingSnarkelId, setPendingSnarkelId] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
@@ -51,7 +54,15 @@ export default function HomePage() {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError);
+        setError('Invalid response from server. Please try again.');
+        setLoading(false);
+        return;
+      }
 
       console.log('API Response:', {
         status: response.status,
@@ -59,17 +70,69 @@ export default function HomePage() {
         data: data
       });
 
+      // Check if verification is required
+      if (data.verificationRequired) {
+        setError(data.message || 'This quiz requires identity verification.');
+        setPendingSnarkelId(data.snarkelId || null);
+        setShowVerification(true);
+        setLoading(false);
+        return;
+      }
+
+      // Check if request was successful
       if (response.ok && data.success) {
         // Navigate to the correct room
-        console.log('Navigating to:', `/quiz/${data.snarkelId}/room/${data.roomId}`);
-        router.push(`/quiz/${data.snarkelId}/room/${data.roomId}`);
+        if (data.snarkelId && data.roomId) {
+          console.log('Navigating to:', `/quiz/${data.snarkelId}/room/${data.roomId}`);
+          router.push(`/quiz/${data.snarkelId}/room/${data.roomId}`);
+        } else {
+          console.error('Missing room or snarkel ID in response:', data);
+          setError('Invalid response from server. Missing room information.');
+        }
       } else {
-        console.error('API Error:', data);
-        setError(data.error || 'Failed to join snakel');
+        // Handle error response
+        console.error('API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: data
+        });
+        
+        // Get error message from various possible locations
+        const errorMessage = data.error || data.message || `Failed to join quiz${response.status ? ` (${response.status})` : ''}`;
+        setError(errorMessage);
       }
     } catch (err) {
       console.error('Error joining snakel:', err);
-      setError('Failed to join snakel. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to join quiz. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const retryJoinAfterVerification = async () => {
+    if (!code.trim() || !address) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/snarkel/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          snarkelCode: code.trim(),
+          userAddress: address,
+          skipVerification: true
+        }),
+      });
+      const data = await response.json();
+      if (response.ok && data.success && data.snarkelId && data.roomId) {
+        router.push(`/quiz/${data.snarkelId}/room/${data.roomId}`);
+      } else {
+        setError(data.error || data.message || 'Failed to join after verification.');
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to join after verification.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -175,8 +238,18 @@ export default function HomePage() {
               * Required to join a snakel
             </p>
             {error && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg">
-                <p className="text-red-600 text-sm text-center">{error}</p>
+              <div className="mb-4 p-4 bg-red-50 border-2 border-red-400 rounded-lg shadow-md">
+                <div className="flex items-start gap-2">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-red-700 text-sm font-medium">Error</p>
+                    <p className="text-red-600 text-sm mt-1">{error}</p>
+                  </div>
+                </div>
               </div>
             )}
             <div className="space-y-4">
@@ -224,6 +297,13 @@ export default function HomePage() {
             </div>
           </div>
       </div>
+      {/* Verification Modal */}
+      <SelfVerificationModal
+        isOpen={showVerification}
+        onClose={() => setShowVerification(false)}
+        onSuccess={retryJoinAfterVerification}
+        snarkelId={pendingSnarkelId || undefined}
+      />
     </FarcasterUI>
   );
 }
