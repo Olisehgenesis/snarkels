@@ -26,12 +26,47 @@ export default function SelfVerificationModal({
 
   useEffect(() => {
     if (isOpen && isConnected && address) {
+      // Intercept fetch requests to add userAddress to verification endpoint
+      const originalFetch = window.fetch;
+      const verificationEndpoint = process.env.NEXT_PUBLIC_SELF_ENDPOINT || '/api/verification/self';
+      
+      window.fetch = async (...args) => {
+        const [url, options] = args;
+        const urlString = typeof url === 'string' ? url : url.toString();
+        
+        // Check if this is a request to our verification endpoint
+        if (urlString.includes(verificationEndpoint) && options?.method === 'POST') {
+          try {
+            // Parse existing body and add userAddress
+            const existingBody = options?.body ? JSON.parse(options.body as string) : {};
+            const modifiedBody = {
+              ...existingBody,
+              userAddress: address
+            };
+            
+            // Create new options with modified body
+            const modifiedOptions = {
+              ...options,
+              body: JSON.stringify(modifiedBody)
+            };
+            
+            console.log('Intercepted verification request, adding userAddress:', address);
+            return originalFetch(url, modifiedOptions);
+          } catch (e) {
+            console.error('Error intercepting fetch:', e);
+            return originalFetch(...args);
+          }
+        }
+        
+        return originalFetch(...args);
+      };
+      
       try {
         const app = new SelfAppBuilder({
           version: 2,
           appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || 'Snarkels',
           scope: process.env.NEXT_PUBLIC_SELF_SCOPE || 'snarkels-verification',
-          endpoint: process.env.NEXT_PUBLIC_SELF_ENDPOINT || 'https://snarkels.lol/api/verification/self',
+          endpoint: verificationEndpoint,
           logoBase64: 'https://snarkels.lol/logo.png',
           userId: address, // Use connected wallet address
           endpointType: 'staging_https',
@@ -50,6 +85,11 @@ export default function SelfVerificationModal({
       } catch (error) {
         console.error('Failed to initialize Self app:', error);
       }
+      
+      // Cleanup: restore original fetch when component unmounts or modal closes
+      return () => {
+        window.fetch = originalFetch;
+      };
     } else {
       // Reset app if wallet disconnects
       setSelfApp(null);
@@ -59,8 +99,8 @@ export default function SelfVerificationModal({
 
   const handleVerificationSuccess = () => {
     console.log('Verification successful!');
-    // The verification data will be sent to our API endpoint
-    // The API will handle saving the data to the database
+    // The address is now automatically included via fetch interception
+    // The verification data will be sent to our API endpoint with userAddress
     onSuccess();
     onClose();
   };
@@ -99,8 +139,11 @@ export default function SelfVerificationModal({
             </div>
           ) : (
             <>
-              <p className="text-gray-600 mb-6">
-                Scan this QR code with the Self app to verify your identity
+              <p className="text-gray-600 mb-4">
+                Self wants to verify your wallet address by confirming your identity.
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Scan this QR code with the Self app to verify your identity. Your personal information remains private - only age and country will be disclosed.
               </p>
               
               {selfApp ? (

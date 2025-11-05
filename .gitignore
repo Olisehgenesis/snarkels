@@ -126,3 +126,7 @@ jspm_packages/
 .env
 
 .env.local
+
+/db
+/db/*
+db/*

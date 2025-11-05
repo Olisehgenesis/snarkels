@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { SelfBackendVerifier, AllIds, DefaultConfigStore } from '@selfxyz/core';
+import { getAddress, isAddress } from 'viem';
 
 const prisma = new PrismaClient();
 
@@ -41,68 +42,37 @@ export async function POST(request: NextRequest) {
     });
 
     // Verify required fields are present
-    if (!proof || !publicSignals || !attestationId || !userContextData) {
+    if (!proof || !publicSignals || !attestationId || !userContextData || !userAddress) {
       console.error('Missing required fields:', {
         proof: !!proof,
         publicSignals: !!publicSignals,
         attestationId: !!attestationId,
-        userContextData: !!userContextData
+        userContextData: !!userContextData,
+        userAddress: !!userAddress
       });
       return NextResponse.json({
-        message: "Proof, publicSignals, attestationId, and userContextData are required",
+        message: "Proof, publicSignals, attestationId, userContextData, and userAddress are required",
       }, { status: 400 });
     }
 
-    // Extract user address from userContextData if not provided directly
-    // userContextData contains the userId (wallet address in hex format) when userIdType is 'hex'
-    let extractedAddress = userAddress;
-    
-    if (!extractedAddress && userContextData) {
-      // userContextData is a hex string containing the userId (wallet address)
-      // Try to extract address from userContextData
-      let addressFromContext: string | null = null;
-      
-      if (typeof userContextData === 'string') {
-        // If it's a string, check if it's a hex address
-        const cleaned = userContextData.trim();
-        if (cleaned.startsWith('0x')) {
-          addressFromContext = cleaned.toLowerCase();
-        } else {
-          // Try adding 0x prefix
-          addressFromContext = `0x${cleaned}`.toLowerCase();
-        }
-        
-        // Validate it looks like an Ethereum address (42 chars including 0x)
-        if (addressFromContext.length === 42 && /^0x[a-f0-9]{40}$/i.test(addressFromContext)) {
-          extractedAddress = addressFromContext;
-        } else {
-          console.warn('userContextData does not appear to be a valid Ethereum address:', {
-            length: addressFromContext.length,
-            format: addressFromContext.substring(0, 10) + '...'
-          });
-        }
-      } else {
-        console.warn('userContextData is not a string:', typeof userContextData);
+    // Validate and normalize the user address
+    let normalizedAddress: string;
+    try {
+      // Validate the address format
+      if (!isAddress(userAddress)) {
+        return NextResponse.json({
+          message: "Invalid user address format",
+        }, { status: 400 });
       }
-    }
-
-    // Ensure we have an address to work with
-    if (!extractedAddress) {
-      console.error('Could not extract user address from request:', {
-        userAddressProvided: !!userAddress,
-        userContextDataType: typeof userContextData,
-        userContextDataSample: typeof userContextData === 'string' ? userContextData.substring(0, 50) : userContextData
-      });
+      // Normalize to checksum address then lowercase for database
+      normalizedAddress = getAddress(userAddress).toLowerCase();
+      console.log('Using provided userAddress:', normalizedAddress);
+    } catch (e) {
+      console.error('Invalid user address:', userAddress, e);
       return NextResponse.json({
-        message: "User address is required. Provide userAddress or ensure userContextData contains a valid Ethereum address.",
-        debug: {
-          userAddressProvided: !!userAddress,
-          userContextDataReceived: !!userContextData
-        }
+        message: "Invalid user address format",
       }, { status: 400 });
     }
-
-    console.log('Using extracted address:', extractedAddress);
 
     // Verify the proof
     const result = await selfBackendVerifier.verify(
@@ -120,14 +90,14 @@ export async function POST(request: NextRequest) {
       try {
         // Find or create user by wallet address
         let user = await prisma.user.findUnique({
-          where: { address: extractedAddress }
+          where: { address: normalizedAddress }
         });
 
         if (!user) {
           // Create new user if they don't exist
           user = await prisma.user.create({
             data: {
-              address: extractedAddress,
+              address: normalizedAddress,
               isVerified: true,
               verificationMethod: 'self_protocol',
               verifiedAt: new Date(),
