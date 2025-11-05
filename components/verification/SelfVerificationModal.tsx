@@ -71,7 +71,7 @@ export default function SelfVerificationModal({
           userId: address, // Use connected wallet address
           endpointType: 'staging_https',
           userIdType: 'hex',
-          userDefinedData: `Snarkels Verification - ${snarkelId || 'General'}`,
+          userDefinedData: `Snarkels wants to verify your wallet address: ${address}. This quiz requires identity verification to ensure you are a real person.`,
           disclosures: {
             // Simplified: only age above 18 and country
             minimumAge: 18,
